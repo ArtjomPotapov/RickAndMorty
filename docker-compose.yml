@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  #Webserver service
+  webserver:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    ports:
+      - ${APP_PORT:-80}:80
+      - ${APP_HTTPS_PORT:-443}:443
+    links:
+      - fpm
+    volumes:
+      - .:/var/www
+    networks:
+      - app-network
+    depends_on:
+      - fpm
+
+  #PHP FPM service
+  fpm:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+      args:
+        WWWGROUP: ${WWWGROUP}
+    volumes:
+      - .:/var/www
+    networks:
+      - app-network
+    environment:
+      WWWUSER: ${WWWUSER}
+
+  #NPM service
+  npm:
+    build:
+      context: ./docker/npm
+      dockerfile: Dockerfile
+    tty: true
+    volumes:
+      - .:/src
+
+networks:
+  app-network:
+    driver: bridge
